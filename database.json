@@ -1,0 +1,10 @@
+{
+  "dev": {
+    "driver": "mysql",
+    "host": "127.0.0.1",
+    "port": "8889",
+    "user": "connor",
+    "password": "$$superstar",
+    "database": "bit_bid_dev"
+  }
+}
