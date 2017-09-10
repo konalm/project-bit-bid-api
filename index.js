@@ -3,13 +3,12 @@ var mongoose = require('mongoose');
 var multer = require('multer');
 var bluebird = require('bluebird');
 var mkdirp = require('mkdirp-promise');
+var fs = require('fs');
 
 var bodyParser = require('body-parser');
 var ejs = require('ejs');
 var session = require('express-session');
 var passport = require('passport');
-
-var fs = require('fs');
 
 var userController = require('./controllers/user');
 var authController = require('./controllers/auth');
@@ -17,6 +16,7 @@ var oauth2Controller = require('./controllers/oauth2');
 var clientController = require('./controllers/client');
 var itemController = require('./controllers/itemController');
 var chargeController = require('./controllers/chargeController');
+var orderController = require ('./controllers/order');
 
 var User = require('./models/user');
 var Token = require('./models/token');
@@ -45,6 +45,7 @@ app.use(function (req, res, next) {
 var authRouter = express.Router();
 var router = express.Router();
 
+/* authorization middleware */
 authRouter.use(function (req, res, next) {
   if (req.method === 'OPTIONS') { next(); return; }
 
@@ -101,7 +102,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-
 const saveItemImgSrc = function (imgPath, itemId) {
   var item = Item.findById(itemId, function(err, item) {
     if (err) { res.send(err); }
@@ -116,14 +116,6 @@ const saveItemImgSrc = function (imgPath, itemId) {
   });
 }
 
-
-authRouter.get('/auth-test', function (req, res) {
-  console.log('auth test !!');
-
-  console.log(req.authUser);
-
-  res.send(req.authUser);
-});
 
 /* users */
 router.route('/users')
@@ -170,6 +162,10 @@ router.route('/items/:item_id')
 /* charge */
 authRouter.route('/handle-order-transaction')
   .post(chargeController.handleOrderTransaction);
+
+authRouter.route('/order/:order_id')
+  .get(orderController.getOrder);
+
 
 /**
  * render image response

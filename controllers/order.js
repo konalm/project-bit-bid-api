@@ -11,3 +11,20 @@ exports.getOrders = function(req, res) {
     res.send(orders);
   });
 }
+
+/**
+ * get order
+ */
+exports.getOrder = function(req, res) {
+  console.log('get order !!');
+
+  Order.findById(req.params.order_id)
+    .populate('item', 'seller', 'buyer')
+    .exec(function(err, order)
+  {
+    if (err) { res.status(500).send(err); }
+
+    return res.json(order);
+  }
+
+}
