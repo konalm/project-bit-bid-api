@@ -3,69 +3,68 @@ const stripe = require("stripe")("sk_test_XnEKEEpi1xHhhVTqG3wYGMXj");
 const Item = require('../models/itemModel');
 const Token = require('../models/token');
 const User = require('../models/user');
-
-exports.placeOrder = function(req, res) {
-  console.log('place order !!');
-
-  stripe.charges.create({
-    amount: 10000,
-    currency: "gbp",
-    source: "tok_1AvtktH6QSsRrkgglcIvXBPs",
-    description: "test charge for £10.00",
-  }, function (err, charge) {
-    if (err) { return res.send(err); }
-
-    return res.send(charge);
-  });
-}
-
-exports.createCustomer = function(req, res) {
-  console.log('create customer !!');
+const Order = require('../models/order');
 
 
-}
+/**
+ * charge user for purchase and create record of the transaction
+ */
+exports.handleOrderTransaction = async function (req, res) {
+  console.log('handle order transaction !!');
 
-
-exports.handleOrderTransaction = function (req, res) {
-  let user = {};
+  let user = req.authUser;
   let item = {};
 
-  Token.findOne({value: req.get('Authorization')}, 'userId')
-    .then(res => {
-        getUser(res.userId);
-    })
-    .catch(err => {
-      return res.status(500).send(err);
-    })
+  await Item.findById(req.body.itemId, (err, data) => {
+    if (err) { return res.status(500).send(err); }
 
-  const getUser = (userId) => {
-    User.findById(userId)
-      .then(res => {
-        user = res;
+    item = data;
+  })
 
-        getItem();
-      })
-      .catch(err => {
-        return res.status(500).send(err);
-      })
-  }
+  console.log('item --->');
+  console.log(item);
 
-  const getItem = () => {
-    Item.findById(req.body.itemId)
-      .then(res => {
-        item = res;
-        chargeUser();
-      })
-  }
+  await stripeChargeCustomer(user, item).catch(err => {
+    console.log(err);
+    return res.status(500).send(err);
+  })
 
-  const chargeUser = () => {
-    /* charge user for the purchased item */
-    stripe.charges.create({
-      amount: item.price * 100,
-      currency: "gbp",
-      customer: user.stripeId
-    });
+  console.log('charged stripe customer');
 
-    return res.send('item transaction complete');
-  }
+  await item.update({sold: 'true'}, (err, data) => {
+    if (err) { return res.status(500).send(err); }
+  })
+
+  await createOrder(item, user);
+  res.send('new order created');
+}
+
+/**
+ * charge user using stripe API
+ */
+function stripeChargeCustomer (user, item) {
+  console.log('stripe charge customer -->');
+  console.log(item.price * 100);
+
+  return stripe.charges.create({
+    amount: item.price * 100,
+    currency: "gbp",
+    customer: user.stripeId
+  })
+}
+
+/**
+ * create new order in the DB
+ */
+function createOrder (item, user) {
+  let order = new Order();
+  order.item = item;
+  order.buyer = user._id;
+  order.seller = item.user;
+
+  order.save(function(err, order) {
+    if (err) { return res.send(err); }
+
+    return;
+  });
 }

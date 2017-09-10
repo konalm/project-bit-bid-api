@@ -28,6 +28,46 @@ mongoose.Promise = require('bluebird');
 
 var app = express();
 
+/* Use the body-parser package in our application */
+app.use(bodyParser.json({limit:'50mb'}));
+app.use(bodyParser.urlencoded({extended: true}));
+
+/* Allow client access */
+app.use(function (req, res, next) {
+  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type, Accept, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  next();
+});
+
+/* Create our Express router */
+var authRouter = express.Router();
+var router = express.Router();
+
+authRouter.use(function (req, res, next) {
+  if (req.method === 'OPTIONS') { next(); return; }
+
+  Token.findOne({value: req.get('Authorization')}, 'userId')
+    .then(res => {
+      getUser(res.userId)
+    })
+    .catch(err => {
+      return res.status(406).send('Not authenticated')
+    })
+
+  const getUser = (userId) => {
+    User.findById(userId)
+      .then(user => {
+        req.authUser = user
+        next()
+      })
+      .catch(err => {
+        return res.status(406).send('Not authenticated')
+      })
+  }
+});
+
 const storage = multer.diskStorage({
   destination: './files',
 
@@ -59,8 +99,8 @@ const storage = multer.diskStorage({
   },
 });
 
-
 const upload = multer({ storage });
+
 
 const saveItemImgSrc = function (imgPath, itemId) {
   var item = Item.findById(itemId, function(err, item) {
@@ -76,21 +116,14 @@ const saveItemImgSrc = function (imgPath, itemId) {
   });
 }
 
-/* Use the body-parser package in our application */
-app.use(bodyParser.json({limit:'50mb'}));
-app.use(bodyParser.urlencoded({extended: true}));
 
-/* Allow client access */
-app.use(function (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Accept, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  next();
+authRouter.get('/auth-test', function (req, res) {
+  console.log('auth test !!');
+
+  console.log(req.authUser);
+
+  res.send(req.authUser);
 });
-
-/* Create our Express router */
-var router = express.Router();
 
 /* users */
 router.route('/users')
@@ -99,7 +132,7 @@ router.route('/users')
 router.route('/user')
   .get(userController.getUser);
 
-router.route('/user-address')
+authRouter.route('/user-address')
   .put(userController.updateAddress)
   .get(userController.getUserAddress);
 
@@ -109,7 +142,7 @@ router.route('/user-billing')
 router.route('/users-profile/:username')
   .get(userController.getUserForView);
 
-router.route('/user-update-stripe')
+authRouter.route('/user-update-stripe')
   .post(userController.updateStripe);
 
 router.route('/login')
@@ -135,13 +168,7 @@ router.route('/items/:item_id')
   .post(upload.any(), itemController.uploadItemImages);
 
 /* charge */
-router.route('/charge')
-  .get(chargeController.placeOrder);
-
-router.route('/create-stripe-customer')
-  .get(chargeController.createCustomer);
-
-router.route('/handle-order-transaction')
+authRouter.route('/handle-order-transaction')
   .post(chargeController.handleOrderTransaction);
 
 /**
@@ -161,6 +188,7 @@ router.post('/upload', upload.any(), function(req, res, next) {
 
 /* Register all routes with /api */
 app.use('/api', router);
+app.use('/api', authRouter);
 
 /* Start the server */
 app.listen(8080);
