@@ -58,8 +58,7 @@ authRouter.use(function (req, res, next) {
     })
 
   const getUser = (userId) => {
-    User.findById(userId)
-      .then(user => {
+    User.findById(userId).then(user => {
         req.authUser = user
         next()
       })
@@ -163,7 +162,7 @@ router.route('/items/:item_id')
 authRouter.route('/handle-order-transaction')
   .post(chargeController.handleOrderTransaction);
 
-authRouter.route('/order/:order_id')
+authRouter.route('/orders/:order_id')
   .get(orderController.getOrder);
 
 

@@ -14,7 +14,10 @@ exports.handleOrderTransaction = async function (req, res) {
   let user = req.authUser;
   let item = {};
 
-  await Item.findById(req.body.itemId, (err, data) => {
+  await Item.findById(req.body.itemId)
+    .populate('user')
+    .exec(function(err, data)
+  {
     if (err) { return res.status(500).send(err); }
 
     item = data;
@@ -52,9 +55,9 @@ function stripeChargeCustomer (user, item) {
  */
 async function createOrder (item, user) {
   let order = new Order();
-  order.item = item;
+  order.item = item._id;
   order.buyer = user._id;
-  order.seller = item.user;
+  order.seller = item.user._id;
 
   await order.save(function(err, order) {
     if (err) { throw new Error(err); }
@@ -78,22 +81,14 @@ async function createOrderAddressTo (order, user) {
 
   await orderAddressTo.save(function(err, data) {
     if (err) { throw new Error(err); }
-
-    console.log('order address saved');
   })
-
-  console.log('order address to complete');
 }
 
 /**
  * update item to sold
  */
 function updateItemToSold (item) {
-  console.log('update item to sold');
-
   item.update({sold: true}, (err, data) => {
     if (err) { throw new Error (err); }
-
-    console.log('item updated');
   });
 }
