@@ -32,7 +32,6 @@ exports.postItem = function(req, res, next) {
 
   .then(item => {
     res.json({message: 'new item has been added', data: item});
-    console.log('saved item !!');
   })
 }
 
@@ -81,7 +80,6 @@ exports.getItemsByCategory = function(req, res) {
     res.json(items);
   });
 }
-
 
 /**
  * get item

@@ -103,13 +103,18 @@ exports.getUserBilling = function (req, res) {
  * update user address
  */
 exports.updateAddress = function (req, res) {
-  const newUserAddress = {
-    addressLine: req.body.addressLine,
-    addressLine2: req.body.addressLine2,
-    country: req.body.country,
-    city: req.body.city,
-    postcode: req.body.postcode
-  }
+  const user = req.authUser;
+
+  const newUserAddress = req.body.address ?
+    req.body.address
+    :
+    {
+      addressLine: req.body.addressLine,
+      addressLine2: req.body.addressLine2,
+      country: req.body.country,
+      city: req.body.city,
+      postcode: req.body.postcode
+    }
 
   /* validation */
   const validation = updateAddressValidation(newUserAddress);
@@ -118,21 +123,12 @@ exports.updateAddress = function (req, res) {
     return res.status(422).send(validation);
   }
 
-  /* find user by token */
-  Token.findOne({value: req.get('Authorization')}, 'userId').exec()
+  user.update(newUserAddress, (err, data) => {
+    if (err) { res.status(500).send(err); return; }
 
-  .then(response => {
-    return User.findById(response.userId).exec()
+    return res.send('user address updated');
   })
-
-  .then(user => {
-    user.update(newUserAddress, (err, data) => {
-      if (err) { res.status(500).send(err); return; }
-
-      res.send('user address updated');
-    })
-  })
-};
+}
 
 /**
  * validate user address update
@@ -158,50 +154,30 @@ function updateAddressValidation (newUserAddress) {
 }
 
 /**
- * update user card details and create stripe customer
+ * create new stripe customer and update user with newly created details
  */
-exports.updateStripe = function (req, res) {
+exports.updateStripe = async function (req, res) {
+  const user = req.authUser;
   let newStripeDetails = {};
 
-  stripeCreateCustomer(req)
-    .then(res => {
-      console.log('stripe create customer --->');
-      console.log(res);
-      console.log('<-----');
+  await stripeCreateCustomer(req).then(res => {
+    newStripeDetails.stripeId = res.id;
+    newStripeDetails.cardLastFour = res.sources.data[0].last4;
+  })
+  .catch(err => {
+    return res.status(500).send(err);
+  });
 
-      newStripeDetails.stripeId = res.id;
-      newStripeDetails.cardLastFour = req.body.userCardDetails.card.last4;
+  user.update(newStripeDetails, (err, data) => {
+    if (err) { return res.status(500).send(err); }
 
-      getUserId(res)
-    })
-    .catch(err => {
-      return res.status(500).send(err);
-    })
-
-  const getUserId = (res) => {
-    Token.findOne({value: req.get('Authorization')}, 'userId')
-      .then((userId) => {
-        getUser(userId.userId);
-      })
-  }
-
-  const getUser = (userId) => {
-    User.findById(userId)
-      .then(res => {
-        updateUserStripe(res);
-      })
-  }
-
-  const updateUserStripe = (user) => {
-    user.update(newStripeDetails, (err, data) => {
-      if (err) { return res.status(500).send(err); }
-
-      return res.send('user card details updated');
-    });
-  }
+    return res.send('user card details updated');
+  });
 }
 
-
+/**
+ * create new stripe customer to be associated with user account
+ */
 function stripeCreateCustomer (req) {
   return stripe.customers.create({
     description: 'Customer for johndoe@gmail.com',
