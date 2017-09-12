@@ -170,8 +170,13 @@ authRouter.route('/orders/:order_id')
  * render image response
  */
 router.get('/render-item-img/:user_id/item/:item_id/img-path/:img_path', function(req, res) {
+  console.log('render image !!');
+
   const img_path = `files/${req.params.user_id}/${req.params.item_id}/${req.params.img_path}`;
   const img = fs.readFileSync(img_path);
+
+  console.log('img path --->');
+  console.log(img_path);
 
   res.writeHead(200, {'Content-Type': 'image/png'});
   res.end(img, 'binary');
