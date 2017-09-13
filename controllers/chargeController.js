@@ -23,6 +23,11 @@ exports.handleOrderTransaction = async function (req, res) {
     item = data;
   })
 
+  /* dont allow item to be bought twice */
+  if (item.sold) {
+    return res.status(403).send('cannot order item that has already been sold');
+  }
+
   await stripeChargeCustomer(user, item).catch(err => {
     return res.status(500).send(err);
   })
@@ -31,10 +36,10 @@ exports.handleOrderTransaction = async function (req, res) {
     if (err) { return res.status(500).send(err); }
   })
 
-  await createOrder(item, user);
+  const newOrder = await createOrder(item, user);
   await updateItemToSold(item);
 
-  res.send('new order created');
+  res.json({message: 'new order created', data: newOrder});
 }
 
 /**
@@ -64,6 +69,8 @@ async function createOrder (item, user) {
   });
 
   await createOrderAddressTo(order, user);
+
+  return order;
 }
 
 /**

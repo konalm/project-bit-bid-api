@@ -162,6 +162,10 @@ router.route('/items/:item_id')
 authRouter.route('/handle-order-transaction')
   .post(chargeController.handleOrderTransaction);
 
+/* orders */
+authRoute.route('/orders')
+  .get(orderController.getOrders);
+
 authRouter.route('/orders/:order_id')
   .get(orderController.getOrder);
 
@@ -170,17 +174,12 @@ authRouter.route('/orders/:order_id')
  * render image response
  */
 router.get('/render-item-img/:user_id/item/:item_id/img-path/:img_path', function(req, res) {
-  console.log('render image !!');
-
   const img_path = `files/${req.params.user_id}/${req.params.item_id}/${req.params.img_path}`;
   const img = fs.readFileSync(img_path);
 
-  console.log('img path --->');
-  console.log(img_path);
-
   res.writeHead(200, {'Content-Type': 'image/png'});
   res.end(img, 'binary');
-})
+});
 
 router.post('/upload', upload.any(), function(req, res, next) {
   res.end();
