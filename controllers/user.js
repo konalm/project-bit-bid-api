@@ -4,6 +4,9 @@ var User = require('../models/user');
 var Token = require('../models/token');
 
 
+/**
+ * create new user
+ */
 exports.postUsers = function(req, res) {
   var user = new User({
     username: req.body.username,
@@ -13,7 +16,6 @@ exports.postUsers = function(req, res) {
 
   user.save(function(err) {
     if (err) { res.send(err); }
-
   });
 
   var token = new Token({

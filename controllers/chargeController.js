@@ -1,5 +1,7 @@
 const stripe = require("stripe")("sk_test_XnEKEEpi1xHhhVTqG3wYGMXj");
 
+const sgMail = require('@sendgrid/mail');
+
 const Item = require('../models/itemModel');
 const Token = require('../models/token');
 const User = require('../models/user');
@@ -19,7 +21,6 @@ exports.handleOrderTransaction = async function (req, res) {
     .exec(function(err, data)
   {
     if (err) { return res.status(500).send(err); }
-
     item = data;
   })
 
@@ -39,15 +40,15 @@ exports.handleOrderTransaction = async function (req, res) {
   const newOrder = await createOrder(item, user);
   await updateItemToSold(item);
 
-  res.json({message: 'new order created', data: newOrder});
+  sendMailNotificationToSeller(newOrder, item, user);
+
+  return res.json({message: 'new order created', data: newOrder});
 }
 
 /**
  * charge user using stripe API
  */
 function stripeChargeCustomer (user, item) {
-  console.log('stripe charge customer');
-
   return stripe.charges.create({
     amount: item.price * 100,
     currency: "gbp",
@@ -98,4 +99,30 @@ function updateItemToSold (item) {
   item.update({sold: true}, (err, data) => {
     if (err) { throw new Error (err); }
   });
+}
+
+/**
+ * send mail notification to seller
+ */
+function sendMailNotificationToSeller (order, item, user) {
+  sgMail.setApiKey('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');
+
+  const email = 'connorlloydmoore@gmail.com';
+  /* item.user.email */
+
+  const msg = {
+    to: `${email}`,
+    from: 'projectbb@gmail.com',
+    subject: `New Sale #${order.id}`,
+    html: `<strong>Well Done.</strong>
+      <br />
+      You have sold a new item. ${item.title} for £${item.price}.</strong>
+      <br />
+      to ${user.username}. Please Disaptch it in the next 48hours. `,
+  };
+
+  sgMail.send(msg).catch(err => {
+    console.log('ERROR');
+    throw new Error(err);
+  })
 }

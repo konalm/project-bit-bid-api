@@ -4,12 +4,22 @@ var multer = require('multer');
 var bluebird = require('bluebird');
 var mkdirp = require('mkdirp-promise');
 var fs = require('fs');
-
 var bodyParser = require('body-parser');
 var ejs = require('ejs');
 var session = require('express-session');
 var passport = require('passport');
 
+/**
+ * declare models
+ */
+var User = require('./models/user');
+var Token = require('./models/token');
+var ItemImgModel = require('./models/item-images-model');
+var Item = require('./models/itemModel');
+
+/**
+ * declare controllers
+ */
 var userController = require('./controllers/user');
 var authController = require('./controllers/auth');
 var oauth2Controller = require('./controllers/oauth2');
@@ -17,11 +27,8 @@ var clientController = require('./controllers/client');
 var itemController = require('./controllers/itemController');
 var chargeController = require('./controllers/chargeController');
 var orderController = require ('./controllers/order');
-
-var User = require('./models/user');
-var Token = require('./models/token');
-var ItemImgModel = require('./models/item-images-model');
-var Item = require('./models/itemModel');
+var saleController = require('./controllers/sale');
+var mailController = require('./controllers/mail');
 
 mongoose.connect('mongodb://localhost/bit_bid_dev');
 mongoose.Promise = require('bluebird');
@@ -41,7 +48,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-/* Create our Express router */
+/* Create Express router */
 var authRouter = express.Router();
 var router = express.Router();
 
@@ -49,8 +56,7 @@ var router = express.Router();
 authRouter.use(function (req, res, next) {
   if (req.method === 'OPTIONS') { next(); return; }
 
-  Token.findOne({value: req.get('Authorization')}, 'userId')
-    .then(res => {
+  Token.findOne({value: req.get('Authorization')}, 'userId').then(res => {
       getUser(res.userId)
     })
     .catch(err => {
@@ -59,12 +65,12 @@ authRouter.use(function (req, res, next) {
 
   const getUser = (userId) => {
     User.findById(userId).then(user => {
-        req.authUser = user
-        next()
-      })
-      .catch(err => {
-        return res.status(406).send('Not authenticated')
-      })
+      req.authUser = user
+      next()
+    })
+    .catch(err => {
+      return res.status(406).send('Not authenticated')
+    })
   }
 });
 
@@ -98,6 +104,7 @@ const storage = multer.diskStorage({
     })
   },
 });
+
 
 const upload = multer({ storage });
 
@@ -145,30 +152,31 @@ router.route('/items')
   .get(itemController.getItems)
   .post(itemController.postItem);
 
-router.route('/items/category/:category_id')
-  .get(itemController.getItemsByCategory);
+router.route('/items/category/:category_id').get(itemController.getItemsByCategory);
 
-router.route('/items/fuzzy-search/:search_query')
-  .get(itemController.getItemsByFuzzySearch);
+router.route('/items/fuzzy-search/:search_query').get(itemController.getItemsByFuzzySearch);
 
-router.route('/items/category/:category/search/:search_query')
-  .get(itemController.getItems);
+router.route('/items/category/:category/search/:search_query').get(itemController.getItems);
 
 router.route('/items/:item_id')
   .get(itemController.getItem)
   .post(upload.any(), itemController.uploadItemImages);
 
 /* charge */
-authRouter.route('/handle-order-transaction')
-  .post(chargeController.handleOrderTransaction);
+authRouter.route('/handle-order-transaction').post(chargeController.handleOrderTransaction);
 
 /* orders */
-authRoute.route('/orders')
-  .get(orderController.getOrders);
+authRouter.route('/orders').get(orderController.getOrders);
+authRouter.route('/orders/:order_id').get(orderController.getOrder);
+authRouter.route('/order-status-update/:order_id').put(orderController.updateOrderStatus);
 
-authRouter.route('/orders/:order_id')
-  .get(orderController.getOrder);
+/* sales */
+authRouter.route('/sales/:sale_id').get(saleController.getSale);
+authRouter.route('/sales').get(saleController.getSales);
 
+/* mail */
+authRouter.route('/mail-notification-to-seller/:seller_id')
+  .get(mailController.sendMailNotificationToSeller);
 
 /**
  * render image response

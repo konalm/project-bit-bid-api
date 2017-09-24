@@ -46,6 +46,9 @@ exports.uploadItemImages = function(req, res, next) {
  * get items dependant on category and search query
  */
 exports.getItems = function(req, res) {
+  console.log('get items !!');
+
+
   let querys = {};
 
   const category = req.params.category;
@@ -65,6 +68,9 @@ exports.getItems = function(req, res) {
 
   Item.find(querys).populate('user').exec(function(err, items) {
     if (err) { res.send(err); }
+
+    console.log('items found ---->');
+    console.log(items);
 
     res.json(items);
   });
