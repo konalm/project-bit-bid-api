@@ -7,15 +7,21 @@ var Token = require('../models/token');
 /**
  * create new user
  */
-exports.postUsers = function(req, res) {
+exports.postUsers = async function(req, res) {
+  try {
+    var stripeAccount = await createStripeAccount(req.body);
+  }
+  catch (err) { throw new Error(err); }
+
   var user = new User({
     username: req.body.username,
     email: req.body.email,
-    password: req.body.password
+    password: req.body.password,
+    stripeAccountId: stripeAccount.id
   });
 
-  user.save(function(err) {
-    if (err) { res.send(err); }
+  await user.save(err => {
+    if (err) { return res.status(406).send(err); }
   });
 
   var token = new Token({
@@ -23,11 +29,11 @@ exports.postUsers = function(req, res) {
     userId: user.id
   });
 
-  token.save(function(err) {
-    if (err) {console.log(err);}
+  token.save(err =>  {
+    if (err) { return res.status(406).send(err); }
   });
 
-  res.json({ message: 'new user account created' });
+  return res.json({ message: 'new user account created' });
 };
 
 /**
@@ -174,6 +180,26 @@ exports.updateStripe = async function (req, res) {
     if (err) { return res.status(500).send(err); }
 
     return res.send('user card details updated');
+  });
+}
+
+/**
+ * create stripe account (for recieving payment for sales)
+ */
+var createStripeAccount = function (userDetails) {
+  const email = 'johndoe@gmail.com'
+  const countryCode = 'gb';
+
+  return new Promise((resolve, reject) => {
+    stripe.account.create({
+      type: 'custom',
+      country: countryCode,
+      email: email
+    }, function (err, account) {
+      if (err) { reject(err); }
+
+      resolve(account);
+    });
   });
 }
 

@@ -44,7 +44,12 @@ var UserSchema = new mongoose.Schema({
     required: false
   },
 
-  stripeId: {
+  stripeCustomerId: {
+    type: String,
+    required: false
+  },
+
+  stripeAccountId: {
     type: String,
     required: false
   },

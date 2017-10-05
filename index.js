@@ -193,6 +193,16 @@ router.post('/upload', upload.any(), function(req, res, next) {
   res.end();
 });
 
+router.route('/card').get(chargeController.createCard);
+router.route('/account').get(chargeController.createAccount);
+router.route('/external-account').get(chargeController.updateAccount);
+router.route('/bank-account').get(chargeController.createBankAccount);
+router.route('/source').get(chargeController.createSource);
+router.route('/payout').get(chargeController.createPayout);
+router.route('/transfer').get(chargeController.transferPayout);
+router.route('/charge').get(chargeController.charge);
+
+
 /* Register all routes with /api */
 app.use('/api', router);
 app.use('/api', authRouter);
