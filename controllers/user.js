@@ -11,13 +11,19 @@ exports.postUsers = async function(req, res) {
   try {
     var stripeAccount = await createStripeAccount(req.body);
   }
-  catch (err) { throw new Error(err); }
+  catch (err) { return res.status(500).send(err); }
+
+  console.log('stripe account ------>');
+  console.log(stripeAccount);
+  console.log('<-----------------');
+  console.log('----------------->');
 
   var user = new User({
     username: req.body.username,
     email: req.body.email,
     password: req.body.password,
-    stripeAccountId: stripeAccount.id
+    stripeAccountId: stripeAccount.id,
+    country: req.body.countryCode
   });
 
   await user.save(err => {
@@ -164,37 +170,38 @@ function updateAddressValidation (newUserAddress) {
 /**
  * create new stripe customer and update user with newly created details
  */
-exports.updateStripe = async function (req, res) {
-  const user = req.authUser;
-  let newStripeDetails = {};
+// exports.createSt= async function (req, res) {
+//   const user = req.authUser;
+//   let newStripeDetails = {};
+//
+//   await stripeCreateCustomer(req).then(res => {
+//     newStripeDetails.stripeId = res.id;
+//     newStripeDetails.cardLastFour = res.sources.data[0].last4;
+//   })
+//   .catch(err => {
+//     return res.status(500).send(err);
+//   });
+//
+//   user.update(newStripeDetails, (err, data) => {
+//     if (err) { return res.status(500).send(err); }
+//
+//     return res.send('user card details updated');
+//   });
+// }
 
-  await stripeCreateCustomer(req).then(res => {
-    newStripeDetails.stripeId = res.id;
-    newStripeDetails.cardLastFour = res.sources.data[0].last4;
-  })
-  .catch(err => {
-    return res.status(500).send(err);
-  });
-
-  user.update(newStripeDetails, (err, data) => {
-    if (err) { return res.status(500).send(err); }
-
-    return res.send('user card details updated');
-  });
-}
 
 /**
  * create stripe account (for recieving payment for sales)
  */
 var createStripeAccount = function (userDetails) {
-  const email = 'johndoe@gmail.com'
-  const countryCode = 'gb';
+  console.log('create stripe account');
+  console.log(userDetails);
 
   return new Promise((resolve, reject) => {
     stripe.account.create({
       type: 'custom',
-      country: countryCode,
-      email: email
+      country: userDetails.countryCode,
+      email: userDetails.email
     }, function (err, account) {
       if (err) { reject(err); }
 
@@ -203,12 +210,13 @@ var createStripeAccount = function (userDetails) {
   });
 }
 
+
 /**
  * create new stripe customer to be associated with user account
  */
-function stripeCreateCustomer (req) {
-  return stripe.customers.create({
-    description: 'Customer for johndoe@gmail.com',
-    source: req.body.userCardDetails.id
-  })
-}
+// function stripeApiCreateCustomer (req) {
+//   return stripe.customers.create({
+//     description: 'Customer for johndoe@gmail.com',
+//     source: req.body.userCardDetails.id
+//   })
+// }

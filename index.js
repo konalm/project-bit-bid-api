@@ -21,6 +21,7 @@ var Item = require('./models/itemModel');
  * declare controllers
  */
 var userController = require('./controllers/user');
+var userStripeController = require('./controllers/userStripe');
 var authController = require('./controllers/auth');
 var oauth2Controller = require('./controllers/oauth2');
 var clientController = require('./controllers/client');
@@ -140,8 +141,14 @@ router.route('/user-billing')
 router.route('/users-profile/:username')
   .get(userController.getUserForView);
 
-authRouter.route('/user-update-stripe')
-  .post(userController.updateStripe);
+authRouter.route('/create-stripe-customer')
+  .post(userStripeController.createStripeCustomer);
+
+authRouter.route('/user-update-stripe-account-debit')
+  .post(userStripeController.updateStripeAccountWithDebit);
+
+authRouter.route('/bank-accounts')
+  .get(userStripeController.getStripeBankAccounts);
 
 router.route('/login')
   .post(authController.postLogin);
@@ -193,14 +200,14 @@ router.post('/upload', upload.any(), function(req, res, next) {
   res.end();
 });
 
-router.route('/card').get(chargeController.createCard);
-router.route('/account').get(chargeController.createAccount);
-router.route('/external-account').get(chargeController.updateAccount);
-router.route('/bank-account').get(chargeController.createBankAccount);
-router.route('/source').get(chargeController.createSource);
-router.route('/payout').get(chargeController.createPayout);
-router.route('/transfer').get(chargeController.transferPayout);
-router.route('/charge').get(chargeController.charge);
+// router.route('/card').get(chargeController.createCard);
+// router.route('/account').get(chargeController.createAccount);
+// router.route('/external-account').get(chargeController.updateAccount);
+// router.route('/bank-account').get(chargeController.createBankAccount);
+// router.route('/source').get(chargeController.createSource);
+// router.route('/payout').get(chargeController.createPayout);
+// router.route('/transfer').get(chargeController.transferPayout);
+// router.route('/charge').get(chargeController.charge);
 
 
 /* Register all routes with /api */

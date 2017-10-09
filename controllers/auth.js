@@ -15,11 +15,15 @@ function allowClientAccess (res) {
  * check user login credentials
  */
 exports.postLogin = function (req, res) {
+  console.log('login !!');
+
   const email = req.body.email;
   const passw = req.body.password;
 
   User.findOne({ email: email }, function (err, user) {
     if (err) { return res.json({ message: err}) }
+
+    console.log('no user found')
 
     if (!user) {
       return res.json({message: 'no user found'})
@@ -39,7 +43,7 @@ exports.postLogin = function (req, res) {
       });
 
       return res.json({message: 'MATCH', token: accessToken});
-    }
+    } else { console.log('password missmatch'); }
 
       return res.json({message: 'Incorrect Details'});
   });
