@@ -42,9 +42,7 @@ exports.getOrders = function(req, res) {
  * update order status
  */
 exports.updateOrderStatus = function (req, res) {
-  console.log('update order status !!');
   let order = {};
-
   const status = req.body.status;
 
   if (!status) {return res.send('No valid status to update');}

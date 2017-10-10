@@ -11,7 +11,7 @@ exports.createStripeCustomer = async function (req, res) {
   let newStripeDetails = {};
 
   await stripeApiCreateCustomer(req).then(res => {
-    newStripeDetails.stripeId = res.id;
+    newStripeDetails.stripeCustomerId = res.id;
     newStripeDetails.cardLastFour = res.sources.data[0].last4;
 
     console.log('create customer --->');

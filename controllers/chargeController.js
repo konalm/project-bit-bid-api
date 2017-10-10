@@ -26,17 +26,15 @@ exports.handleOrderTransaction = async function (req, res) {
 
   /* dont allow item to be bought twice */
   if (item.sold) {
-    // return res.status(403).send('cannot order item that has already been sold');
+    return res.status(403).send('cannot order item that has already been sold');
   }
 
   await stripeChargeCustomer(user, item).catch(err => {
-    throw new Error(err);
+    return res.status(500).send(err);
   })
 
   await item.update({sold: 'true'}, (err, data) => {
-    if (err) {
-      throw new Error(err);
-    }
+    if (err) { return res.status(500).send(err); }
   })
 
   const newOrder = await createOrder(item, user);
@@ -52,11 +50,11 @@ exports.handleOrderTransaction = async function (req, res) {
  */
 function stripeChargeCustomer (user, item) {
   return stripe.charges.create({
-    amount: 200 * 100,
+    amount: item.price * 100,
     currency: "gbp",
-    customer: user.stripeId,
+    customer: user.stripeCustomerId,
     destination: {
-      account: item.user.stripeId
+      account: item.user.stripeAccountId
     }
   })
 }
@@ -70,6 +68,7 @@ async function createOrder (item, user) {
   order.item = item._id;
   order.buyer = user._id;
   order.seller = item.user._id;
+  order.status = 0;
 
   await order.save(function(err, order) {
     if (err) { throw new Error(err); }
