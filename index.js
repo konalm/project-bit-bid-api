@@ -155,9 +155,9 @@ router.route('/login')
 
 
 /* items */
-router.route('/items')
-  .get(itemController.getItems)
-  .post(itemController.postItem);
+router.route('/items').get(itemController.getItems);
+
+authRouter.route('/items').post(itemController.postItem);
 
 router.route('/items/category/:category_id').get(itemController.getItemsByCategory);
 

@@ -166,8 +166,6 @@ exports.createBankAccount = async function (req, res) {
     function (err, bankAccount) {
       if (err) { console.log(err); }
 
-      console.log('bank account ------->');
-      console.log(bankAccount);
       return res.json(bankAccount);
     }
   );
@@ -198,8 +196,6 @@ exports.createCard = async function (req, res) {
 }
 
 exports.createSource = async function (req, res) {
-  console.log('create source');
-
   stripe.customers.createSource(
     "cus_BSypoSWL4WgCZn",
     { source: "tok_1B7Wy7H6QSsRrkgg9Kqqre5N" },
@@ -213,8 +209,6 @@ exports.createSource = async function (req, res) {
 }
 
 exports.createPayout = async function (req, res) {
-  console.log('create payout');
-
   stripe.payouts.create({
     amount: 400,
     currency: "usd",

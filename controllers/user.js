@@ -8,15 +8,28 @@ var Token = require('../models/token');
  * create new user
  */
 exports.postUsers = async function(req, res) {
+  console.log('post users !!');
+
+  const validation = createUserValidation(req.body);
+
+  console.log('validation -->');
+  console.log(validation.status);
+
+  console.log(typeof(validation.status));
+
+  if (!validation.status) {
+    console.log('user failed validation !!');
+    return res.status(403).send(validation.message);
+  }
+
+
+  return;
+
+
   try {
     var stripeAccount = await createStripeAccount(req.body);
   }
   catch (err) { return res.status(500).send(err); }
-
-  console.log('stripe account ------>');
-  console.log(stripeAccount);
-  console.log('<-----------------');
-  console.log('----------------->');
 
   var user = new User({
     username: req.body.username,
@@ -27,15 +40,6 @@ exports.postUsers = async function(req, res) {
   });
 
   await user.save(err => {
-    if (err) { return res.status(406).send(err); }
-  });
-
-  var token = new Token({
-    value: generateRandomString(26),
-    userId: user.id
-  });
-
-  token.save(err =>  {
     if (err) { return res.status(406).send(err); }
   });
 
@@ -168,27 +172,45 @@ function updateAddressValidation (newUserAddress) {
 }
 
 /**
- * create new stripe customer and update user with newly created details
+ * create user validation
  */
-// exports.createSt= async function (req, res) {
-//   const user = req.authUser;
-//   let newStripeDetails = {};
-//
-//   await stripeCreateCustomer(req).then(res => {
-//     newStripeDetails.stripeId = res.id;
-//     newStripeDetails.cardLastFour = res.sources.data[0].last4;
-//   })
-//   .catch(err => {
-//     return res.status(500).send(err);
-//   });
-//
-//   user.update(newStripeDetails, (err, data) => {
-//     if (err) { return res.status(500).send(err); }
-//
-//     return res.send('user card details updated');
-//   });
-// }
+function createUserValidation (user) {
+  if (!user.username) {
+    return {status: false, message: 'username required'}
+  }
 
+  if (user.username.length < 3) {
+    return {status: false, message: 'username must me at leat 3 characters'}
+  }
+
+  if (!user.email) {
+    return {status: false, message: 'email address is required'}
+  }
+
+  if (!emailValidation(user.email)) {
+    return {status: false, message: 'invalid email address'}
+  }
+
+  if (!user.password) {
+    return {status: false, message: 'password is required'}
+
+  }
+
+  if (user.password.length < 6) {
+    return {status: false, message: 'password must at least 6 characters'}
+  }
+
+  return {status: true, message: 'passed validation'};
+}
+
+/**
+ * validate email address with regex
+ */
+function emailValidation (email) {
+  var regex = new RegExp('^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$');
+
+  return regex.test(email);
+}
 
 /**
  * create stripe account (for recieving payment for sales)
@@ -209,14 +231,3 @@ var createStripeAccount = function (userDetails) {
     });
   });
 }
-
-
-/**
- * create new stripe customer to be associated with user account
- */
-// function stripeApiCreateCustomer (req) {
-//   return stripe.customers.create({
-//     description: 'Customer for johndoe@gmail.com',
-//     source: req.body.userCardDetails.id
-//   })
-// }

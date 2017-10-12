@@ -7,6 +7,7 @@ var Token = require('../models/token');
  * save new item
  */
 exports.postItem = function(req, res, next) {
+  let user = req.authUser;
   var item = new Item();
 
   item.title = req.body.title;
@@ -16,23 +17,11 @@ exports.postItem = function(req, res, next) {
   item.sellMethod = req.body.sellMethod;
   item.deliveryMethod = req.body.deliveryMethod;
   item.price = req.body.price;
+  item.sold = false;
+  item.user = req.authUser;
+  item.save();
 
-  const authToken = req.get('Authorization');
-
-  Token.findOne({value: authToken}, 'userId').exec()
-
-  .then(res => {
-    return User.findById(res.userId).exec()
-  })
-
-  .then(res => {
-    item.user = res;
-    return item.save()
-  })
-
-  .then(item => {
-    res.json({message: 'new item has been added', data: item});
-  })
+  res.json({message: 'new item has been added', data: item});
 }
 
 /**
@@ -46,9 +35,6 @@ exports.uploadItemImages = function(req, res, next) {
  * get items dependant on category and search query
  */
 exports.getItems = function(req, res) {
-  console.log('get items !!');
-
-
   let querys = {};
 
   const category = req.params.category;
@@ -59,6 +45,8 @@ exports.getItems = function(req, res) {
     querys.category = category;
   }
 
+  querys.sold = false;
+
   if (searchQuery !== 'default') {
     querys = Object.assign(
       querys,
@@ -67,12 +55,9 @@ exports.getItems = function(req, res) {
   }
 
   Item.find(querys).populate('user').exec(function(err, items) {
-    if (err) { res.send(err); }
+    if (err) { res.status(500).send(err); }
 
-    console.log('items found ---->');
-    console.log(items);
-
-    res.json(items);
+    return  res.json(items);
   });
 }
 
