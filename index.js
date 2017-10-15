@@ -210,6 +210,23 @@ router.post('/upload', upload.any(), function(req, res, next) {
 // router.route('/transfer').get(chargeController.transferPayout);
 // router.route('/charge').get(chargeController.charge);
 
+// const stripe = require("stripe")("sk_test_XnEKEEpi1xHhhVTqG3wYGMXj");
+//
+// router.get('/test', function(req, res) {
+//
+//       stripe.account.create({
+//         type: 'custom',
+//         country: 'GB',
+//         email: 'connor@gmail.com'
+//       }, function (err, account) {
+//         if (err) { reject(err); }
+//         console.log('account ---->');
+//         console.log(account);
+//
+//         return res.send(account);
+//       });
+// })
+
 
 /* Register all routes with /api */
 app.use('/api', router);

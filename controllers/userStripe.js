@@ -5,17 +5,12 @@ const stripe = require("stripe")("sk_test_XnEKEEpi1xHhhVTqG3wYGMXj");
  * create new stripe customer and update user with newly created details
  */
 exports.createStripeCustomer = async function (req, res) {
-  console.log('create stripe customer !!');
-
   const user = req.authUser;
   let newStripeDetails = {};
 
   await stripeApiCreateCustomer(req).then(res => {
     newStripeDetails.stripeCustomerId = res.id;
     newStripeDetails.cardLastFour = res.sources.data[0].last4;
-
-    console.log('create customer --->');
-    console.log(res);
   })
   .catch(err => {
     return res.status(500).send(err);

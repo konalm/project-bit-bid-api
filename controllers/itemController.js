@@ -10,6 +10,12 @@ exports.postItem = function(req, res, next) {
   let user = req.authUser;
   var item = new Item();
 
+  const itemValidation = newItemValidation(req.body);
+
+  if (!itemValidation.status) {
+    return res.status(403).send(itemValidation.message);
+  }
+
   item.title = req.body.title;
   item.category = req.body.category;
   item.condition = req.body.condition;
@@ -97,4 +103,53 @@ exports.getItemsByFuzzySearch = function(req, res) {
 
     res.json(items);
   });
+}
+
+/**
+ * validate new item data
+ */
+const newItemValidation = function (itemData) {
+  console.log('new item validation');
+  console.log(itemData);
+
+  if (!itemData.title) {
+    return {status: false, message: 'descriptive title is required'}
+  }
+
+  if (!itemData.category) {
+    return {status: false, message: 'category is required'}
+  }
+
+  if (!itemData.condition) {
+    return {status: false, message: 'condition is required'}
+  }
+
+  if (!itemData.description) {
+    return {status: false, message: 'description is required'}
+  }
+
+  if (!itemData.sellMethod) {
+    return {status: false, message: 'sell method is required'}
+  }
+
+  if (!itemData.deliveryMethod) {
+    return {status: false, message: 'delivery method is required'}
+  }
+
+  if (!itemData.price) {
+    return {status: false, message: 'price is required'}
+  }
+
+  if (!itemData.uploadedImagesLength > 0) {
+    return {status: false, message: 'at least one photo required'}
+  }
+
+  if (itemData.description.length < 20) {
+    return {
+      status: false,
+      message: 'at least 20 characters required for description'
+    }
+  }
+
+  return {status: true, message: 'item passed validation'};
 }

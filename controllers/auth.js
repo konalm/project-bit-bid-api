@@ -15,28 +15,20 @@ function allowClientAccess (res) {
  * check user login credentials
  */
 exports.postLogin = async function (req, res) {
-  console.log('auth login !! --> DELTA');
-
   const email = req.body.email;
   const passw = req.body.password;
 
   User.findOne({ email: email }, async function (err, user) {
     if (err) { return res.status(500).send(err); }
-
-    if (!user) {
-      console.log('no user');
-      return res.status(403).send('email or password is incorrect');
-    }
+    
+    if (!user) { return res.status(403).send('email or password is incorrect'); }
 
     /* username and password match */
     if (user.password === passw) {
-      console.log('match');
       const token = await createAuthToken(user);
-      console.log('token done');
-      return res.json({message: 'MATCH', token: token});
+      return res.json({message: 'email and password match', token: token});
     }
 
-    console.log('no match');
     return res.status(403).send('email or password is incorrect');
   });
 };
@@ -45,20 +37,12 @@ exports.postLogin = async function (req, res) {
  * crete auth token
  */
 async function createAuthToken (user) {
-  console.log('create auth token !!');
-
   var accessToken = generateRandomString(26);
-
-  var token = new Token({
-    value: accessToken,
-    userId: user.id
-  });
+  var token = new Token({value: accessToken, userId: user.id});
 
   await token.save(function(err) {
     if (err) { res.status(500).send(err); }
   });
-
-  console.log('auth token saved');
 
   return accessToken;
 }
