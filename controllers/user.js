@@ -5,26 +5,29 @@ var Token = require('../models/token');
 
 
 /**
- * create new user
+ * CREATE USER
+ * check user entered valid data
+ * check username and email is unique
+ * create stripe account
+ * create user
  */
 exports.postUsers = async function(req, res) {
-  console.log('post users !!');
-
   const validation = createUserValidation(req.body);
 
-  console.log('validation -->');
-  console.log(validation.status);
+  if (!validation.status)
+    { return res.status(403).send(validation.message); }
 
-  console.log(typeof(validation.status));
+  await checkUsernameIsUnique(req.body.username).then(response => {
+    if (response)
+      { return res.status(403).send('username is already in use'); }
+  })
+  .catch(err => { return res.status(500).send(err); })
 
-  if (!validation.status) {
-    console.log('user failed validation !!');
-    return res.status(403).send(validation.message);
-  }
-
-
-  return;
-
+  await checkEmailIsUnique(req.body.email).then(response => {
+    if (response)
+      { return res.status(403).send('email is already in use'); }
+  })
+  .catch(err => { return res.status(500).send(err); })
 
   try {
     var stripeAccount = await createStripeAccount(req.body);
@@ -216,9 +219,6 @@ function emailValidation (email) {
  * create stripe account (for recieving payment for sales)
  */
 var createStripeAccount = function (userDetails) {
-  console.log('create stripe account');
-  console.log(userDetails);
-
   return new Promise((resolve, reject) => {
     stripe.account.create({
       type: 'custom',
@@ -230,4 +230,28 @@ var createStripeAccount = function (userDetails) {
       resolve(account);
     });
   });
+}
+
+/**
+ * check username is unique
+ */
+var checkUsernameIsUnique = function (username) {
+  return new Promise((resolve, reject) => {
+    User.findOne({username: username }, 'username').then(res => {
+      resolve(res);
+    })
+    .catch(err => { reject(err); })
+  })
+}
+
+/**
+ * check email is uniquer
+ */
+var checkEmailIsUnique = function (email) {
+  return new Promise((resolve, reject) => {
+    User.findOne({email: email}, 'email').then(res => {
+      resolve(res);
+    })
+    .catch(err => { reject(err); })
+  })
 }

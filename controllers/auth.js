@@ -14,40 +14,55 @@ function allowClientAccess (res) {
 /**
  * check user login credentials
  */
-exports.postLogin = function (req, res) {
-  console.log('login !!');
+exports.postLogin = async function (req, res) {
+  console.log('auth login !! --> DELTA');
 
   const email = req.body.email;
   const passw = req.body.password;
 
-  User.findOne({ email: email }, function (err, user) {
-    if (err) { return res.json({ message: err}) }
-
-    console.log('no user found')
+  User.findOne({ email: email }, async function (err, user) {
+    if (err) { return res.status(500).send(err); }
 
     if (!user) {
-      return res.json({message: 'no user found'})
+      console.log('no user');
+      return res.status(403).send('email or password is incorrect');
     }
 
     /* username and password match */
     if (user.password === passw) {
-      var accessToken = generateRandomString(26);
+      console.log('match');
+      const token = await createAuthToken(user);
+      console.log('token done');
+      return res.json({message: 'MATCH', token: token});
+    }
 
-      var token = new Token({
-        value: accessToken,
-        userId: user.id
-      });
-
-      token.save(function(err) {
-        if (err) { res.send(err); }
-      });
-
-      return res.json({message: 'MATCH', token: accessToken});
-    } else { console.log('password missmatch'); }
-
-      return res.json({message: 'Incorrect Details'});
+    console.log('no match');
+    return res.status(403).send('email or password is incorrect');
   });
 };
+
+/**
+ * crete auth token
+ */
+async function createAuthToken (user) {
+  console.log('create auth token !!');
+
+  var accessToken = generateRandomString(26);
+
+  var token = new Token({
+    value: accessToken,
+    userId: user.id
+  });
+
+  await token.save(function(err) {
+    if (err) { res.status(500).send(err); }
+  });
+
+  console.log('auth token saved');
+
+  return accessToken;
+}
+
 
 /**
  * generate random string  (usually used for generating tokens)

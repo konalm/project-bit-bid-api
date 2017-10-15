@@ -159,6 +159,7 @@ router.route('/items').get(itemController.getItems);
 
 authRouter.route('/items').post(itemController.postItem);
 
+
 router.route('/items/category/:category_id').get(itemController.getItemsByCategory);
 
 router.route('/items/fuzzy-search/:search_query').get(itemController.getItemsByFuzzySearch);
