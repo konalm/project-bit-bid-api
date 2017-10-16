@@ -5,6 +5,10 @@ const stripe = require("stripe")("sk_test_XnEKEEpi1xHhhVTqG3wYGMXj");
  * create new stripe customer and update user with newly created details
  */
 exports.createStripeCustomer = async function (req, res) {
+  if (!req.body.userCardDetails.id) {
+    return res.status(403).send('There was an error processing your card');
+  }
+
   const user = req.authUser;
   let newStripeDetails = {};
 
