@@ -125,10 +125,14 @@ exports.getUserBilling = function (req, res) {
  */
 exports.updateAddress = function (req, res) {
   const user = req.authUser;
+  const validation = addressValidation(req.body);
+
+  if (!validation.status) {
+    return res.status(403).send(validation.message);
+  }
 
   const newUserAddress = req.body.address ?
-    req.body.address
-    :
+    req.body.address :
     {
       addressLine: req.body.addressLine,
       addressLine2: req.body.addressLine2,
@@ -136,13 +140,6 @@ exports.updateAddress = function (req, res) {
       city: req.body.city,
       postcode: req.body.postcode
     }
-
-  /* validation */
-  const validation = updateAddressValidation(newUserAddress);
-
-  if (validation) {
-    return res.status(422).send(validation);
-  }
 
   user.update(newUserAddress, (err, data) => {
     if (err) { res.status(500).send(err); return; }
@@ -254,4 +251,23 @@ var checkEmailIsUnique = function (email) {
     })
     .catch(err => { reject(err); })
   })
+}
+
+/**
+ * address validation
+ */
+function addressValidation (address) {
+  if (!address.addressLine) {
+    return {status: false, message: 'address line is required'}
+  }
+
+  if (!address.city) {
+    return {status: false, message: 'city is required'}
+  }
+
+  if (!address.postcode) {
+    return {status: false, message: 'postcode is requried'}
+  }
+
+  return {status: true, message: 'passed validation'}
 }

@@ -34,6 +34,10 @@ exports.updateStripeAccountWithDebit = async function (req, res) {
   const user = req.authUser;
   const bankAccountDetails = req.body.bankAccountDetails;
 
+  if (!bankAccountDetails.id) {
+    return res.status(401).send('unable to process bank account');
+  }
+
   stripe.accounts.update(user.stripeAccountId,
     {external_account: bankAccountDetails.id},
     function (err, externalAccount) {
