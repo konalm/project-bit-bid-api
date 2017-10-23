@@ -2,15 +2,6 @@ var User = require('../models/user');
 var Client = require('../models/client');
 var Token = require('../models/token');
 
-function allowClientAccess (res) {
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-  res.setHeader('Access-Control-Allow-Credentials', true);
-
-  return res;
-}
-
 /**
  * check user login credentials
  */
@@ -20,7 +11,7 @@ exports.postLogin = async function (req, res) {
 
   User.findOne({ email: email }, async function (err, user) {
     if (err) { return res.status(500).send(err); }
-    
+
     if (!user) { return res.status(403).send('email or password is incorrect'); }
 
     /* username and password match */

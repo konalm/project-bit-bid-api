@@ -1,4 +1,8 @@
+/**
+ * packages
+ */
 var express = require('express');
+var app = express();
 var mongoose = require('mongoose');
 var multer = require('multer');
 var bluebird = require('bluebird');
@@ -10,7 +14,7 @@ var session = require('express-session');
 var passport = require('passport');
 
 /**
- * declare models
+ * models
  */
 var User = require('./models/user');
 var Token = require('./models/token');
@@ -18,7 +22,7 @@ var ItemImgModel = require('./models/item-images-model');
 var Item = require('./models/itemModel');
 
 /**
- * declare controllers
+ * controllers
  */
 var userController = require('./controllers/user');
 var userStripeController = require('./controllers/userStripe');
@@ -31,115 +35,75 @@ var orderController = require ('./controllers/order');
 var saleController = require('./controllers/sale');
 var mailController = require('./controllers/mail');
 
+/**
+ * middleware
+ */
+var allowClientAccess = require('./middleware/cors');
+var requireAuth = require('./middleware/auth');
+
+/**
+ * services
+ */
+ var renderImageResponse = require('./services/render-image-response');
+ var storeItemImg = require('./services/storeItemImg');
+ const upload = multer({ storage: storeItemImg });
+
+/**
+ * connect to mongo database
+ */
 mongoose.connect('mongodb://localhost/bit_bid_dev');
 mongoose.Promise = require('bluebird');
 
-var app = express();
-
-/* Use the body-parser package in our application */
+/**
+ * Use the body-parser package
+ */
 app.use(bodyParser.json({limit:'50mb'}));
 app.use(bodyParser.urlencoded({extended: true}));
 
-/* Allow client access */
+/**
+ * Allow client access
+ */
 app.use(function (req, res, next) {
-  res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type, Accept, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', true);
+  res = allowClientAccess(res);
   next();
 });
 
-/* Create Express router */
+/**
+ * Create Express routers
+ */
 var authRouter = express.Router();
 var router = express.Router();
 
-/* authorization middleware */
+/**
+ * Register all routes with /api
+ */
+app.use('/api', router);
+app.use('/api', authRouter);
+
+/*
+ * check user in client is authorized
+ */
 authRouter.use(function (req, res, next) {
-  if (req.method === 'OPTIONS') { next(); return; }
-
-  Token.findOne({value: req.get('Authorization')}, 'userId').then(res => {
-      getUser(res.userId)
-    })
-    .catch(err => {
-      return res.status(406).send('Not authenticated')
-    })
-
-  const getUser = (userId) => {
-    User.findById(userId).then(user => {
-      req.authUser = user
-      next()
-    })
-    .catch(err => {
-      return res.status(406).send('Not authenticated')
-    })
-  }
-});
-
-const storage = multer.diskStorage({
-  destination: './files',
-
-  filename (req, file, cb) {
-    const token = req.get('Authorization');
-    const itemId = req.params.item_id;
-
-    Token.findOne({value: token}, 'userId').exec()
-
-    .then(res => {
-      const timestamp = new Date().getTime()/100;
-      const targetDir = `./files/${res.userId}/${itemId}`;
-      const imgName = `${timestamp}-${file.originalname}`;
-      const imgPath = `${res.userId}/${itemId}/${imgName}`;
-
-      if (!fs.existsSync(targetDir)) {
-        mkdirp(targetDir)
-          .then((response) => {
-            saveItemImgSrc(`${imgName}`, itemId);
-            cb(null, `${imgPath}`);
-          })
-
-        return;
-      }
-
-      saveItemImgSrc(`${imgName}`, itemId);
-      cb(null, `${imgPath}`);
-    })
-  },
+  requireAuth(req, res, next);
 });
 
 
-const upload = multer({ storage });
+/*******
+  register routes
+*******/
 
-const saveItemImgSrc = function (imgPath, itemId) {
-  var item = Item.findById(itemId, function(err, item) {
-    if (err) { res.send(err); }
-
-    let imgCollection = item.imgCollection;
-    imgCollection.push(imgPath);
-    item.imgCollection = imgCollection;
-
-    item.save(function(err) {
-      if (err) { console.log(err); }
-    });
-  });
-}
-
-
-/* users */
-router.route('/users')
-  .post(userController.postUsers);
-
-router.route('/user')
-  .get(userController.getUser);
+/**
+ * user endpoint routes
+ */
+router.route('/users').post(userController.postUsers);
+router.route('/user').get(userController.getUser);
 
 authRouter.route('/user-address')
   .put(userController.updateAddress)
   .get(userController.getUserAddress);
 
-router.route('/user-billing')
-  .get(userController.getUserBilling);
-
-router.route('/users-profile/:username')
-  .get(userController.getUserForView);
+router.route('/user-billing').get(userController.getUserBilling);
+router.route('/users-profile/:username').get(userController.getUserForView);
 
 authRouter.route('/create-stripe-customer')
   .post(userStripeController.createStripeCustomer);
@@ -150,87 +114,63 @@ authRouter.route('/user-update-stripe-account-debit')
 authRouter.route('/bank-accounts')
   .get(userStripeController.getStripeBankAccounts);
 
-router.route('/login')
-  .post(authController.postLogin);
+authRouter.route('/logged-in-status').get(userController.userLoggedIn);
+router.route('/login').post(authController.postLogin);
 
-
-/* items */
+/**
+ * item endpoint routes
+ */
 router.route('/items').get(itemController.getItems);
-
 authRouter.route('/items').post(itemController.postItem);
 
+router.route('/items/category/:category_id')
+  .get(itemController.getItemsByCategory);
 
-router.route('/items/category/:category_id').get(itemController.getItemsByCategory);
+router.route('/items/fuzzy-search/:search_query')
+  .get(itemController.getItemsByFuzzySearch);
 
-router.route('/items/fuzzy-search/:search_query').get(itemController.getItemsByFuzzySearch);
-
-router.route('/items/category/:category/search/:search_query').get(itemController.getItems);
+router.route('/items/category/:category/search/:search_query')
+  .get(itemController.getItems);
 
 router.route('/items/:item_id')
   .get(itemController.getItem)
+
+authRouter.route('/items/:item_id')
   .post(upload.any(), itemController.uploadItemImages);
 
-/* charge */
-authRouter.route('/handle-order-transaction').post(chargeController.handleOrderTransaction);
+/**
+ * charge
+ */
+authRouter.route('/handle-order-transaction')
+  .post(chargeController.handleOrderTransaction);
 
-/* orders */
+/**
+ * order endpoint routes
+ */
 authRouter.route('/orders').get(orderController.getOrders);
 authRouter.route('/orders/:order_id').get(orderController.getOrder);
-authRouter.route('/order-status-update/:order_id').put(orderController.updateOrderStatus);
+authRouter.route('/order-status-update/:order_id')
+  .put(orderController.updateOrderStatus);
 
-/* sales */
+/**
+ * sale endpoint routes
+ */
 authRouter.route('/sales/:sale_id').get(saleController.getSale);
 authRouter.route('/sales').get(saleController.getSales);
 
-/* mail */
+/**
+ * mail
+ */
 authRouter.route('/mail-notification-to-seller/:seller_id')
   .get(mailController.sendMailNotificationToSeller);
 
 /**
  * render image response
  */
-router.get('/render-item-img/:user_id/item/:item_id/img-path/:img_path', function(req, res) {
-  const img_path = `files/${req.params.user_id}/${req.params.item_id}/${req.params.img_path}`;
-  const img = fs.readFileSync(img_path);
+router.route('/render-item-img/:user_id/item/:item_id/img-path/:img_path')
+  .get(renderImageResponse);
 
-  res.writeHead(200, {'Content-Type': 'image/png'});
-  res.end(img, 'binary');
-});
-
-router.post('/upload', upload.any(), function(req, res, next) {
-  res.end();
-});
-
-// router.route('/card').get(chargeController.createCard);
-// router.route('/account').get(chargeController.createAccount);
-// router.route('/external-account').get(chargeController.updateAccount);
-// router.route('/bank-account').get(chargeController.createBankAccount);
-// router.route('/source').get(chargeController.createSource);
-// router.route('/payout').get(chargeController.createPayout);
-// router.route('/transfer').get(chargeController.transferPayout);
-// router.route('/charge').get(chargeController.charge);
-
-// const stripe = require("stripe")("sk_test_XnEKEEpi1xHhhVTqG3wYGMXj");
-//
-// router.get('/test', function(req, res) {
-//
-//       stripe.account.create({
-//         type: 'custom',
-//         country: 'GB',
-//         email: 'connor@gmail.com'
-//       }, function (err, account) {
-//         if (err) { reject(err); }
-//         console.log('account ---->');
-//         console.log(account);
-//
-//         return res.send(account);
-//       });
-// })
-
-
-/* Register all routes with /api */
-app.use('/api', router);
-app.use('/api', authRouter);
-
-/* Start the server */
+/**
+ * Start the server
+ */
 app.listen(8080);

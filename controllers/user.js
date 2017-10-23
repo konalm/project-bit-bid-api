@@ -149,6 +149,14 @@ exports.updateAddress = function (req, res) {
 }
 
 /**
+ * check user is logged in
+ * if passed middleware then user is logged in
+ */
+exports.userLoggedIn = function (req, res) {
+  return res.status(200).send(true);
+}
+
+/**
  * validate user address update
  */
 function updateAddressValidation (newUserAddress) {
