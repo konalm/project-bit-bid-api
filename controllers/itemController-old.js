@@ -2,13 +2,11 @@ var Item = require('../models/itemModel');
 var User = require('../models/user');
 var Token = require('../models/token');
 
-var servicePath = '../services/item/';
-
 /**
- * services
+ * includes
  */
-var newItemValidation = require(`${servicePath}new-item-validation`)
-var buildSearchQuery = require(`${servicePath}build-search-query`)
+var newItemValidation = require('./include/new-item-validation')
+var buildSearchQuery = require('./include/build-search-query')
 
 /**
  * save new item
