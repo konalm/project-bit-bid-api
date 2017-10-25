@@ -1,36 +1,33 @@
-/**
- * api routes
- */
-module.exports.set = function(router, authRouter) {
-  console.log('routes');
+/*******
+  api routes
+ ******/
 
+const apiRoutes = (router, authRouter) => {
   /**
    * item routes
    */
-  itemRoutes = require('./item');
-  itemRoutes.set(router, authRouter);
+   require('./item')(router, authRouter);
 
   /**
    * user routes
    */
-  userRoutes = require('./user');
-  userRoutes.set(router, authRouter);
+  require('./user')(router, authRouter);
 
   /**
    * order routes
    */
-  orderRoutes = require('./order');
-  orderRoutes.set(router, authRouter);
+  require('./order')(router, authRouter);
 
   /**
    * sale routes
    */
-  orderRoutes = require('./sale');
-  orderRoutes.set(router, authRouter);
+  require('./sale')(router, authRouter);
 
-  /*
+  /**
    * render image response route
    */
-   renderImageRoute = require('./render-image')
-   renderImageRoute.set(router);
+  require('./render-image')(router, authRouter);
 }
+
+
+module.exports = apiRoutes;

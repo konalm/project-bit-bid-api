@@ -5,15 +5,12 @@ const sgMail = require('@sendgrid/mail');
 const Item = require('../models/itemModel');
 const Token = require('../models/token');
 const User = require('../models/user');
-const Order = require('../models/order');
-const OrderAddressTo = require('../models/orderAddressTo')
+
 
 const servicePath = '../services/order/';
 
 
-/**
- * services
- */
+
 var chargeCustomer = require(`${servicePath}charge-customer`);
 var createOrder = require(`${servicePath}create-order`);
 
@@ -24,9 +21,7 @@ var createOrderAddressTo =
     require(`${servicePath}create-order-address-to`);
 
 
-/**
- * charge user for purchase and create record of the transaction
- */
+
 exports.handleOrderTransaction = async function (req, res) {
   let user = req.authUser;
   let item = {};

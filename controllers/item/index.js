@@ -1,3 +1,1 @@
-var itemController = require('./itemController');
-
-module.exports = itemController
+module.exports = require('./itemController');

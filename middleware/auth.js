@@ -12,9 +12,7 @@ const requireAuth = (req, res, next) => {
   Token.findOne({value: req.get('Authorization')}, 'userId').then(res => {
       getUser(res.userId)
     })
-    .catch(err => {
-      return res.status(406).send('Not authorized')
-    })
+    .catch(err => { return res.status(406).send('Not authorized') })
 
   const getUser = (userId) => {
     User.findById(userId).then(user => {

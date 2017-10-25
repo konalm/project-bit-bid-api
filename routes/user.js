@@ -2,13 +2,14 @@ var userController = require('../controllers/user')
 var userStripeController = require('../controllers/userStripe');
 var authController = require('../controllers/auth')
 
-/**
- * user routes
- */
-module.exports.set = function(router, authRouter) {
-  console.log('user routes');
 
+/******
+  user routes
+ ******/
+
+const userRoutes = (router, authRouter) => {
   router.route('/users').post(userController.postUsers);
+
   router.route('/user').get(userController.getUser);
 
   authRouter.route('/user-address')
@@ -16,6 +17,7 @@ module.exports.set = function(router, authRouter) {
     .get(userController.getUserAddress);
 
   router.route('/user-billing').get(userController.getUserBilling);
+
   router.route('/users-profile/:username').get(userController.getUserForView);
 
   authRouter.route('/create-stripe-customer')
@@ -28,5 +30,8 @@ module.exports.set = function(router, authRouter) {
     .get(userStripeController.getStripeBankAccounts);
 
   authRouter.route('/logged-in-status').get(userController.userLoggedIn);
+
   router.route('/login').post(authController.postLogin);
 }
+
+module.exports = userRoutes

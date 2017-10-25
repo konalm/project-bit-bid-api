@@ -1,4 +1,4 @@
-const OrderAddressTo = require('../../models/orderAddressTo')
+const OrderAddressTo = require('../../../models/orderAddressTo')
 
 /**
  * create address for the item in order to be delivered to

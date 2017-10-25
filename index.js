@@ -1,19 +1,19 @@
-var bodyParser = require('body-parser');
-var express = require('express');
-var app = express();
-var mongoose = require('mongoose');
-var bluebird = require('bluebird');
+var bodyParser = require('body-parser'),
+  express = require('express'),
+  app = express(),
+  mongoose = require('mongoose'),
+  bluebird = require('bluebird');
 
-var router = express.Router();
-var authRouter = express.Router();
+var router = express.Router(),
+  authRouter = express.Router();
 
-var allowClientAccess = require('./middleware/cors');
-var requireAuth = require('./middleware/auth');
+var allowClientAccess = require('./middleware/cors'),
+  requireAuth = require('./middleware/auth');
 
 app.use(bodyParser.urlencoded ({extended: true}));
 app.use(bodyParser.json ({limit:'50mb'}));
 
-/*
+/**
  * Allow client access
  */
 app.use(function (req, res, next) {
@@ -21,13 +21,13 @@ app.use(function (req, res, next) {
   next();
 });
 
-/*
+/**
  * Register all routes with /api
  */
 app.use('/api', router);
 app.use('/api', authRouter);
 
-/*
+/**
  * check user in client is authorized
  */
 authRouter.use(function (req, res, next) {
@@ -43,8 +43,7 @@ mongoose.Promise = require('bluebird');
 /**
  * api routes
  */
-routes = require('./routes');
-routes.set(router, authRouter);
+require('./routes')(router, authRouter);
 
 /**
  * Start the server

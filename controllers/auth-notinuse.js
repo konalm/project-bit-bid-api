@@ -25,7 +25,7 @@ exports.postLogin = async function (req, res) {
 };
 
 /**
- * crete auth token
+ * create auth token
  */
 async function createAuthToken (user) {
   var accessToken = generateRandomString(26);
