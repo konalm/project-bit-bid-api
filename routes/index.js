@@ -3,6 +3,17 @@
  ******/
 
 const apiRoutes = (router, authRouter) => {
+
+  // authRouter.get('/test', function(req, res) {
+  //   console.log('reached authorized endpoint !!!');
+  //
+  // console.log('decoded ----->');
+  // console.log(req.decoded);
+  // console.log('<------------');
+  //
+  //   return res.send('reached authorized endpoint !!');
+  // });
+
   /**
    * item routes
    */

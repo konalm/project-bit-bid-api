@@ -9,7 +9,7 @@ exports.createStripeCustomer = async function (req, res) {
     return res.status(403).send('There was an error processing your card');
   }
 
-  const user = req.authUser;
+  const user = req.decoded.user;
   let newStripeDetails = {};
 
   await stripeApiCreateCustomer(req).then(res => {
@@ -31,7 +31,7 @@ exports.createStripeCustomer = async function (req, res) {
  * update stipe account with debit card (to recieve payments from sales)
  */
 exports.updateStripeAccountWithDebit = async function (req, res) {
-  const user = req.authUser;
+  const user = req.decoded.user;
   const bankAccountDetails = req.body.bankAccountDetails;
 
   if (!bankAccountDetails.id) {
@@ -52,7 +52,7 @@ exports.updateStripeAccountWithDebit = async function (req, res) {
  * get stripe bank accounts belonging to user
  */
 exports.getStripeBankAccounts = function (req, res) {
-  const user = req.authUser;
+  const user = req.decoded.user;
 
   stripe.accounts.listExternalAccounts(
     user.stripeAccountId,

@@ -15,4 +15,5 @@ const createAuthToken = async function (user) {
   return accessToken;
 }
 
+
 module.exports = createAuthToken

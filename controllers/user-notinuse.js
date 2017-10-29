@@ -124,7 +124,7 @@ exports.getUserBilling = function (req, res) {
  * update user address
  */
 exports.updateAddress = function (req, res) {
-  const user = req.authUser;
+  const user = req.decoded.user;
   const validation = addressValidation(req.body);
 
   if (!validation.status) {

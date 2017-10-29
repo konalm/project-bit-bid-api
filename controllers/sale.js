@@ -6,7 +6,7 @@ const User = require('../models/user');
  * get sale
  */
 exports.getSale = function (req, res) {
-  const user = req.authUser;
+  const user = req.decoded.user;
 
   Order.findById(req.params.sale_id)
     .populate('item buyer seller')
@@ -26,7 +26,7 @@ exports.getSale = function (req, res) {
  * get all user sales
  */
 exports.getSales = function (req, res) {
-  const user = req.authUser;
+  const user = req.decoded.user;
 
   Order.find({seller: user})
     .populate('item seller')

@@ -14,7 +14,7 @@ var buildSearchQuery = require(`./include/build-search-query`)
  * save new item
  */
 exports.postItem = function(req, res, next) {
-  let user = req.authUser;
+  let user = req.decoded.user;
   var item = new Item();
 
   const itemValidation = newItemValidation(req.body);
@@ -31,7 +31,7 @@ exports.postItem = function(req, res, next) {
   item.deliveryMethod = req.body.deliveryMethod;
   item.price = req.body.price;
   item.sold = false;
-  item.user = req.authUser;
+  item.user = user;
   item.save();
 
   res.json({message: 'new item has been added', data: item});

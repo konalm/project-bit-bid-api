@@ -22,17 +22,17 @@ app.use(function (req, res, next) {
 });
 
 /**
- * Register all routes with /api
- */
-app.use('/api', router);
-app.use('/api', authRouter);
-
-/**
  * check user in client is authorized
  */
 authRouter.use(function (req, res, next) {
   requireAuth(req, res, next);
 });
+
+/**
+ * Register all routes with /api
+ */
+app.use('/api', router);
+app.use('/api', authRouter);
 
 /**
  * connect to mongo database

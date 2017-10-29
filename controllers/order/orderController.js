@@ -21,7 +21,7 @@ var chargeCustomer = require(`./include/charge-customer`),
  * get order
  */
 exports.getOrder = function(req, res) {
-  const user = req.authUser;
+  const user = req.decoded.user;
 
   Order.findById(req.params.order_id)
     .populate('item buyer seller')
@@ -41,7 +41,7 @@ exports.getOrder = function(req, res) {
  * get all user orders
  */
 exports.getOrders = function(req, res) {
-  const user = req.authUser;
+  const user = req.decoded.user;
 
   Order.find({buyer: user})
     .populate('item seller')
@@ -82,7 +82,7 @@ exports.updateOrderStatus = function (req, res) {
  * charge user for purchase and create record of the transaction
  */
 exports.handleOrderTransaction = async function (req, res) {
-  let user = req.authUser;
+  let user = req.decoded.user;
   let item = {};
 
   /* find item being ordered */

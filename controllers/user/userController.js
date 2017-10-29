@@ -1,63 +1,48 @@
-const stripe = require("stripe")("sk_test_XnEKEEpi1xHhhVTqG3wYGMXj");
+const stripe = require("stripe")("sk_test_XnEKEEpi1xHhhVTqG3wYGMXj"),
+  bcrypt = require('bcrypt');
 
-var User = require('../../models/user'),
+const User = require('../../models/user'),
   Token = require('../../models/token');
 
 /**
  * includes
  */
 const addressValidation = require('./include/address-validation'),
-  checkEmailIsUnique = require('./include/check-email-unique'),
-  checkUsernameIsUnique = require('./include/check-username-unique'),
   createStripeAccount = require('./include/create-stripe-account'),
   emailValidation = require('./include/email-validation'),
   createUserValidation = require('./include/create-user-validation'),
-  updateAddressValidation = require('./include/update-address-validation');
+  updateAddressValidation = require('./include/update-address-validation')
+  createUserModel = require('./include/create-user-model');
 
 
 /**
- * CREATE USER
- * check user entered valid data
- * check username and email is unique
- * create stripe account
  * create user
  */
 exports.postUsers = async function(req, res) {
-  const validation = createUserValidation(req.body);
+  const validation = await createUserValidation(req.body);
 
-  if (!validation.status)
-    { return res.status(403).send(validation.message); }
+  if (!validation.status) { return res.status(403).send(validation.message); }
 
-  await checkUsernameIsUnique(req.body.username).then(response => {
-    if (response)
-      { return res.status(403).send('username is already in use'); }
-  })
-  .catch(err => { return res.status(500).send(err); })
-
-  await checkEmailIsUnique(req.body.email).then(response => {
-    if (response)
-      { return res.status(403).send('email is already in use'); }
-  })
-  .catch(err => { return res.status(500).send(err); })
-
+  /* create stripe account for user */
   try {
     var stripeAccount = await createStripeAccount(req.body);
   }
   catch (err) { return res.status(500).send(err); }
 
-  var user = new User({
-    username: req.body.username,
-    email: req.body.email,
-    password: req.body.password,
-    stripeAccountId: stripeAccount.id,
-    country: req.body.countryCode
-  });
+  /* create user model */
+  try {
+    var user = await createUserModel(req.body, stripeAccount);
+  }
+  catch (err) { return res.status(500).send(err); }
 
   await user.save(err => {
     if (err) { return res.status(406).send(err); }
   });
 
-  return res.json({ message: 'new user account created' });
+  return res.json({
+    message: 'new user account created',
+    data: user
+  });
 };
 
 /**
@@ -135,7 +120,7 @@ exports.getUserBilling = function (req, res) {
  * update user address
  */
 exports.updateAddress = function (req, res) {
-  const user = req.authUser;
+  const user = req.decoded.user;
   const validation = addressValidation(req.body);
 
   if (!validation.status) {
@@ -166,127 +151,3 @@ exports.updateAddress = function (req, res) {
 exports.userLoggedIn = function (req, res) {
   return res.status(200).send(true);
 }
-
-/**
- * validate user address update
- */
-// function updateAddressValidation (newUserAddress) {
-//   if (!newUserAddress.addressLine) {
-//     return 'You must enter an Address line';
-//   }
-//
-//   if (!newUserAddress.country) {
-//     return 'You must enter a Country';
-//   }
-//
-//   if (!newUserAddress.city) {
-//     return 'You must enter a City';
-//   }
-//
-//   if (!newUserAddress.postcode) {
-//     return 'You must enter a Postcode';
-//   }
-//
-//   return false;
-// }
-
-/**
- * create user validation
- */
-// function createUserValidation (user) {
-//   if (!user.username) {
-//     return {status: false, message: 'username required'}
-//   }
-//
-//   if (user.username.length < 3) {
-//     return {status: false, message: 'username must me at leat 3 characters'}
-//   }
-//
-//   if (!user.email) {
-//     return {status: false, message: 'email address is required'}
-//   }
-//
-//   if (!emailValidation(user.email)) {
-//     return {status: false, message: 'invalid email address'}
-//   }
-//
-//   if (!user.password) {
-//     return {status: false, message: 'password is required'}
-//
-//   }
-//
-//   if (user.password.length < 6) {
-//     return {status: false, message: 'password must at least 6 characters'}
-//   }
-//
-//   return {status: true, message: 'passed validation'};
-// }
-
-/**
- * validate email address with regex
- */
-// function emailValidation (email) {
-//   var regex = new RegExp('^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$');
-//
-//   return regex.test(email);
-// }
-
-/**
- * create stripe account (for recieving payment for sales)
- */
-// var createStripeAccount = function (userDetails) {
-//   return new Promise((resolve, reject) => {
-//     stripe.account.create({
-//       type: 'custom',
-//       country: userDetails.countryCode,
-//       email: userDetails.email
-//     }, function (err, account) {
-//       if (err) { reject(err); }
-//
-//       resolve(account);
-//     });
-//   });
-// }
-
-/**
- * check username is unique
- */
-// var checkUsernameIsUnique = function (username) {
-//   return new Promise((resolve, reject) => {
-//     User.findOne({username: username }, 'username').then(res => {
-//       resolve(res);
-//     })
-//     .catch(err => { reject(err); })
-//   })
-// }
-
-/**
- * check email is uniquer
- */
-// var checkEmailIsUnique = function (email) {
-//   return new Promise((resolve, reject) => {
-//     User.findOne({email: email}, 'email').then(res => {
-//       resolve(res);
-//     })
-//     .catch(err => { reject(err); })
-//   })
-// }
-
-/**
- * address validation
- */
-// function addressValidation (address) {
-//   if (!address.addressLine) {
-//     return {status: false, message: 'address line is required'}
-//   }
-//
-//   if (!address.city) {
-//     return {status: false, message: 'city is required'}
-//   }
-//
-//   if (!address.postcode) {
-//     return {status: false, message: 'postcode is requried'}
-//   }
-//
-//   return {status: true, message: 'passed validation'}
-// }

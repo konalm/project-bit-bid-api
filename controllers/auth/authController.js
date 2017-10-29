@@ -1,3 +1,8 @@
+const bcrypt = require('bcrypt'),
+  jwt = require('jsonwebtoken');
+
+const config = require('../../config');
+
 var User = require('../../models/user'),
   Client = require('../../models/client'),
   Token = require('../../models/token');
@@ -6,26 +11,37 @@ var User = require('../../models/user'),
  * includes
  */
 var generateRandomString = require('./include/generate-random-string'),
-  createAuthToken = require('./include/create-auth-token');
+  createAuthToken = require('./include/create-auth-token'),
+  userTokenModel = require('./include/user-model-for-token');
 
 /**
- * check user login credentials
+ * compare password user entered to the one in database using bcrypt
  */
 exports.postLogin = async function (req, res) {
   const email = req.body.email;
   const passw = req.body.password;
 
-  User.findOne({ email: email }, async function (err, user) {
-    if (err) { return res.status(500).send(err); }
+  try {
+    var user = await User.findOne({ email: email })
+  }
+  catch (err) { return res.status(500).send(err); }
 
-    if (!user) { return res.status(403).send('email or password is incorrect'); }
+  await bcrypt.compare(passw, user.password)
+    .then(async (response) => {
+      if (!response) {
+        return res.status(403).send('email or password is incorrect');
+      }
 
-    /* username and password match */
-    if (user.password === passw) {
-      const token = await createAuthToken(user);
+      const payload = { user: userTokenModel(user) };
+
+      try {
+        var token = jwt.sign(payload, config.secret, { expiresIn: "2 days" });
+      }
+      catch (err) { return res.status(500).send(err.message); }
+
       return res.json({message: 'email and password match', token: token});
-    }
-
-    return res.status(403).send('email or password is incorrect');
-  });
+    })
+    .catch(err => {
+      return res.status(500).send(err);
+    })
 };

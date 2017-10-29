@@ -12,11 +12,8 @@ const storage = multer.diskStorage({
   destination: './files',
 
   filename: function (req, file, cb) {
-    console.log('STORAGE');
-
-    const user = req.authUser;
-    console.log(user);
-
+    const user = req.decoded.user;
+    
     const itemId = req.params.item_id;
 
     const timestamp = new Date().getTime()/100;
