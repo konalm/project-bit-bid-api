@@ -2,8 +2,6 @@
  * build query dependant of category and search query
  */
 buildSearchQuery = function (req) {
-  console.log('build search query');
-
   let querys = {}
 
   const category = req.params.category;

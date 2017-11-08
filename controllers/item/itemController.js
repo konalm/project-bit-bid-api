@@ -51,11 +51,42 @@ exports.uploadItemImages = function(req, res, next) {
 exports.getItems = function(req, res) {
   let querys = buildSearchQuery(req);
 
-  Item.find(querys).populate('user').exec(function(err, items) {
-    if (err) { res.status(500).send(err); }
+  const perPageLimit = req.query.limit ? parseInt(req.query.limit) : 10;
+  const pageNo = req.query.pageno ? parseInt(req.query.pageno) : 1;
 
-    return  res.json(items);
+  console.log('per page limit -->');
+  console.log(perPageLimit);
+
+  console.log('page no -->');
+  console.log(pageNo);
+
+  Item.find(querys)
+    .populate('user')
+    .limit(perPageLimit)
+    .skip(perPageLimit * (pageNo - 1))
+    .exec(function(err, items)
+  {
+    if (err) {
+      return res.status(500).send(err);
+    }
+
+    return res.json(items);
   });
+}
+
+/**
+ * count items (usually for pagination)
+ */
+exports.countItems = function(req, res) {
+  let querys = buildSearchQuery(req);
+
+  Item.count(querys, function (err, count) {
+    if (err) {
+      res.status(500).send(err);
+    }
+
+    return res.json(count);
+  })
 }
 
 /**

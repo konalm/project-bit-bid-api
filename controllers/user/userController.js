@@ -60,17 +60,10 @@ exports.getUserForView = function (req, res) {
  * get user
  */
 exports.getUser = function (req, res) {
-  Token.findOne({value: req.get('Authorization')}, 'userId').exec()
 
-  .then(response => {
-    return User.findById(response.userId).exec()
-  })
-  .then(user => {
-    res.send(user);
-  })
-  .catch(err => {
-    res.send(err);
-  })
+  const user = req.decoded.user;
+
+  return res.send(user);
 }
 
 /**

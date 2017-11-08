@@ -10,7 +10,7 @@ var authController = require('../controllers/auth')
 const userRoutes = (router, authRouter) => {
   router.route('/users').post(userController.postUsers);
 
-  router.route('/user').get(userController.getUser);
+  authRouter.route('/user').get(userController.getUser);
 
   authRouter.route('/user-address')
     .put(userController.updateAddress)

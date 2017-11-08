@@ -28,7 +28,7 @@ exports.createStripeCustomer = async function (req, res) {
 }
 
 /**
- * update stipe account with debit card (to recieve payments from sales)
+ * update stripe account with debit card (to recieve payments from sales)
  */
 exports.updateStripeAccountWithDebit = async function (req, res) {
   const user = req.decoded.user;

@@ -5,7 +5,7 @@ var ItemSchema = new mongoose.Schema({
   category: String,
   condition: String,
   description: String,
-  sellMethod: Number,
+  listedType: Number,
   deliveryMethod: Number,
   price: Number,
   user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},

@@ -23,8 +23,10 @@ const itemRoutes = (router, authRouter) => {
   router.route('/items/category/:category/search/:search_query')
     .get(itemController.getItems);
 
-  router.route('/items/:item_id')
-    .get(itemController.getItem)
+  router.route('/items-count/:category/search/:search_query')
+    .get(itemController.countItems);
+
+  router.route('/items/:item_id').get(itemController.getItem)
 
   authRouter.route('/items/:item_id')
     .post(upload.any(), itemController.uploadItemImages);
