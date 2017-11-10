@@ -9,32 +9,39 @@ var servicePath = '../../services/item/';
  */
 var newItemValidation = require(`./include/new-item-validation`)
 var buildSearchQuery = require(`./include/build-search-query`)
+var saveNewItem = require(`./include/save-item-model`)
+var saveNewItemBidStats = require('./include/save-item-bid-model')
 
 /**
  * save new item
+ * then save bid stats item if item is selling via auction
  */
-exports.postItem = function(req, res, next) {
-  let user = req.decoded.user;
-  var item = new Item();
+exports.postItem = async function(req, res) {
+  let newItem = {};
+  let newItemBidStats = {};
 
-  const itemValidation = newItemValidation(req.body);
+  const itemValidation = newItemValidation(req.body)
 
   if (!itemValidation.status) {
-    return res.status(403).send(itemValidation.message);
+    return res.status(403).send(itemValidation.message)
   }
 
-  item.title = req.body.title;
-  item.category = req.body.category;
-  item.condition = req.body.condition;
-  item.description = req.body.description;
-  item.sellMethod = req.body.sellMethod;
-  item.deliveryMethod = req.body.deliveryMethod;
-  item.price = req.body.price;
-  item.sold = false;
-  item.user = user;
-  item.save();
+  await saveNewItem(req.body, req.decoded.user)
+    .then(res => { newItem = res })
+    .catch(err => { return res.status(500).send(err) })
 
-  res.json({message: 'new item has been added', data: item});
+  if (req.body.sellMethod === 2) {
+    try {
+      newItemBidStats = await saveNewItemBidStats(req.body, newItem)
+    }
+    catch (err) { return res.status(500).send(err.message) }
+  }
+
+  return res.json({
+    message: 'new item has been added',
+    item: newItem,
+    itemBidStats: newItemBidStats
+  });
 }
 
 

@@ -16,7 +16,6 @@ var chargeCustomer = require(`./include/charge-customer`),
   createOrderAddressTo = require(`./include/create-order-address-to`);
 
 
-
 /**
  * get order
  */

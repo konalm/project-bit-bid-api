@@ -3,7 +3,7 @@
  */
 newItemValidation = function (itemData) {
   console.log('new item validation');
-  
+
   if (!itemData.title) {
     return {status: false, message: 'descriptive title is required'}
   }
@@ -28,8 +28,17 @@ newItemValidation = function (itemData) {
     return {status: false, message: 'delivery method is required'}
   }
 
-  if (!itemData.price) {
+
+  if (!itemData.price && itemData.sellMethod == 1) {
     return {status: false, message: 'price is required'}
+  }
+
+  if (!itemData.bidStartingPrice && itemData.sellMethod == 2) {
+    return {status: false, message: 'bid starting price requried'}
+  }
+
+  if (!itemData.bidDuration && itemData.selllMethod == 2) {
+    return {status: false, message: 'bid duration required'}
   }
 
   if (!itemData.uploadedImagesLength > 0) {

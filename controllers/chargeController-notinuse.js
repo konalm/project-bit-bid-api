@@ -6,9 +6,7 @@ const Item = require('../models/itemModel');
 const Token = require('../models/token');
 const User = require('../models/user');
 
-
 const servicePath = '../services/order/';
-
 
 
 var chargeCustomer = require(`${servicePath}charge-customer`);
@@ -19,8 +17,6 @@ var sendMailNotificationToSeller =
 
 var createOrderAddressTo =
     require(`${servicePath}create-order-address-to`);
-
-
 
 exports.handleOrderTransaction = async function (req, res) {
   let user = req.authUser;
