@@ -5,10 +5,11 @@ var ItemSchema = new mongoose.Schema({
   category: String,
   condition: String,
   description: String,
-  listedType: Number,
+  listingType: Number,
   deliveryMethod: Number,
   price: Number,
   user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+  bidStats: {type: mongoose.Schema.Types.ObjectId, ref: 'ItemBidStats'},
   imgCollection: [String],
   sold: Boolean
 });

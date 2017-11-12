@@ -13,29 +13,29 @@ var saveNewItem = require(`./include/save-item-model`)
 var saveNewItemBidStats = require('./include/save-item-bid-model')
 
 /**
- * save new item
+ * save item
+ * check  valid inputed data  for item model
+ * create item model
  * then save bid stats item if item is selling via auction
  */
 exports.postItem = async function(req, res) {
-  let newItem = {};
-  let newItemBidStats = {};
-
   const itemValidation = newItemValidation(req.body)
+  var newItemBidStats = {}
+  var newItem = {}
 
   if (!itemValidation.status) {
     return res.status(403).send(itemValidation.message)
   }
 
-  await saveNewItem(req.body, req.decoded.user)
-    .then(res => { newItem = res })
-    .catch(err => { return res.status(500).send(err) })
-
-  if (req.body.sellMethod === 2) {
-    try {
-      newItemBidStats = await saveNewItemBidStats(req.body, newItem)
-    }
-    catch (err) { return res.status(500).send(err.message) }
+  if (req.body.sellMethod == 2) {
+    await saveNewItemBidStats(req.body)
+      .then (res => { newItemBidStats = res })
+      .catch (err => { return res.status(500).send(err.message) })
   }
+
+  await saveNewItem(req.body, req.decoded.user, newItemBidStats)
+    .then(res => { newItem = res })
+    .catch(err => { return res.status(500).send(err.message) })
 
   return res.json({
     message: 'new item has been added',
@@ -43,7 +43,6 @@ exports.postItem = async function(req, res) {
     itemBidStats: newItemBidStats
   });
 }
-
 
 /**
  * upload item images
@@ -61,14 +60,9 @@ exports.getItems = function(req, res) {
   const perPageLimit = req.query.limit ? parseInt(req.query.limit) : 10;
   const pageNo = req.query.pageno ? parseInt(req.query.pageno) : 1;
 
-  console.log('per page limit -->');
-  console.log(perPageLimit);
-
-  console.log('page no -->');
-  console.log(pageNo);
-
   Item.find(querys)
     .populate('user')
+    .populate('bidStats')
     .limit(perPageLimit)
     .skip(perPageLimit * (pageNo - 1))
     .exec(function(err, items)

@@ -6,9 +6,13 @@ buildSearchQuery = function (req) {
 
   const category = req.params.category;
   const searchQuery = req.params.search_query;
+  const listing = req.params.listing;
   const regex = new RegExp(searchQuery, 'i');
 
   if (category !== 'default') { querys.category = category; }
+
+  if (listing === 'marketplace') { querys.listingType = 1 }
+  if (listing === 'auction') { querys.listingType = 2 }
 
   querys.sold = false;
 

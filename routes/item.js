@@ -20,10 +20,10 @@ const itemRoutes = (router, authRouter) => {
   router.route('/items/fuzzy-search/:search_query')
     .get(itemController.getItemsByFuzzySearch);
 
-  router.route('/items/category/:category/search/:search_query')
+  router.route('/items/category/:category/search/:search_query/listing/:listing')
     .get(itemController.getItems);
 
-  router.route('/items-count/:category/search/:search_query')
+  router.route('/items-count/:category/search/:search_query/listing/:listing')
     .get(itemController.countItems);
 
   router.route('/items/:item_id').get(itemController.getItem)
