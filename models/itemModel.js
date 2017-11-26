@@ -10,6 +10,7 @@ var ItemSchema = new mongoose.Schema({
   price: Number,
   user: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
   bidStats: {type: mongoose.Schema.Types.ObjectId, ref: 'ItemBidStats'},
+  bids: [{type: mongoose.Schema.Types.ObjectId, ref: 'Bid'}],
   imgCollection: [String],
   sold: Boolean
 });

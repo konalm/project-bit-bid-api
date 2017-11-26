@@ -1,8 +1,9 @@
-var Item = require('../../models/itemModel');
-var User = require('../../models/user');
-var Token = require('../../models/token');
+var Item = require('../../models/itemModel')
+var User = require('../../models/user')
+var Bid = require('../../models/bid')
+var Token = require('../../models/token')
 
-var servicePath = '../../services/item/';
+var servicePath = '../../services/item/'
 
 /**
  * includes
@@ -57,12 +58,19 @@ exports.uploadItemImages = function(req, res, next) {
 exports.getItems = function(req, res) {
   let querys = buildSearchQuery(req);
 
-  const perPageLimit = req.query.limit ? parseInt(req.query.limit) : 10;
-  const pageNo = req.query.pageno ? parseInt(req.query.pageno) : 1;
+  const perPageLimit = req.query.limit ? parseInt(req.query.limit) : 10
+  const pageNo = req.query.pageno ? parseInt(req.query.pageno) : 1
 
   Item.find(querys)
     .populate('user')
     .populate('bidStats')
+    .populate({
+      path: 'bids',
+      options: {
+        limit: 1,
+        sort: { 'amount': -1 }
+      }
+    })
     .limit(perPageLimit)
     .skip(perPageLimit * (pageNo - 1))
     .exec(function(err, items)
@@ -105,8 +113,18 @@ exports.getItemsByCategory = function(req, res) {
  * get item
  */
 exports.getItem = function(req, res) {
-  Item.findById(req.params.item_id).populate('user').exec(function(err, item) {
-    if (err) { res.send(err); }
+  Item.findById(req.params.item_id)
+    .populate('user')
+    .populate({
+      path: 'bids',
+      options: {
+        limit: 1,
+        sort: { 'amount': -1 }
+      }
+    })
+    .exec((err, item) =>
+  {
+    if (err) { return res.status(500).send(err); }
 
     res.json(item);
   });

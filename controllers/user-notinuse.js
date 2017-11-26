@@ -24,10 +24,13 @@ exports.postUsers = async function(req, res) {
   .catch(err => { return res.status(500).send(err); })
 
   await checkEmailIsUnique(req.body.email).then(response => {
-    if (response)
-      { return res.status(403).send('email is already in use'); }
+    if (response) {
+      return res.status(403).send('email is already in use');
+    }
   })
-  .catch(err => { return res.status(500).send(err); })
+  .catch(err => {
+    return res.status(500).send(err);
+  })
 
   try {
     var stripeAccount = await createStripeAccount(req.body);
